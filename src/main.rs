@@ -49,15 +49,7 @@ async fn main() -> Result<()> {
     main_spinner.tick();
 
     // Load configuration
-    main_spinner.set_message("Loading configuration...");
-    let config = if let Some(ref config_path) = cli.config {
-        config::load_config(config_path).context(format!(
-            "Failed to load config from {}",
-            config_path.display()
-        ))?
-    } else {
-        config::find_and_load_config().unwrap_or_default()
-    };
+    // Load configuration - moved to later
 
     // If --init flag is set, create a new configuration file and exit
     if cli.init {
@@ -101,7 +93,16 @@ async fn main() -> Result<()> {
             .context("Failed to clone remote repository")?;
 
         main_spinner.set_message("Processing repository...");
-        let merged_config = config.merge_with_cli(&cli);
+        // Load configuration for remote
+        let base_config = if let Some(ref config_path) = cli.config {
+            config::load_config(config_path).context(format!(
+                "Failed to load config from {}",
+                config_path.display()
+            ))?
+        } else {
+            config::find_and_load_config_at(&temp_dir).unwrap_or_default()
+        };
+        let merged_config = base_config.merge_with_cli(&cli);
         let result = packer::pack_repository(&temp_dir, &merged_config).await?;
 
         main_spinner.set_message("Formatting output...");
@@ -115,7 +116,16 @@ async fn main() -> Result<()> {
         info!("Processing local repository: {}", target_path.display());
 
         main_spinner.set_message("Processing repository...");
-        let merged_config = config.merge_with_cli(&cli);
+        // Load configuration for local
+        let base_config = if let Some(ref config_path) = cli.config {
+            config::load_config(config_path).context(format!(
+                "Failed to load config from {}",
+                config_path.display()
+            ))?
+        } else {
+            config::find_and_load_config_at(&target_path).unwrap_or_default()
+        };
+        let merged_config = base_config.merge_with_cli(&cli);
         let result = packer::pack_repository(&target_path, &merged_config).await?;
 
         main_spinner.set_message("Formatting output...");

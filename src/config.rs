@@ -290,15 +290,7 @@ impl Config {
 /// Find and load the configuration file
 pub fn find_and_load_config() -> Result<Config> {
     let current_dir = std::env::current_dir()?;
-    let config_path = current_dir.join(CONFIG_FILENAME);
-
-    if config_path.exists() {
-        info!("Found configuration file: {}", config_path.display());
-        load_config(&config_path)
-    } else {
-        warn!("No configuration file found, using defaults");
-        Ok(Config::default())
-    }
+    find_and_load_config_at(&current_dir)
 }
 
 /// Load configuration from a file
@@ -310,6 +302,19 @@ pub fn load_config(path: &Path) -> Result<Config> {
         .context(format!("Failed to parse config file: {}", path.display()))?;
 
     Ok(config)
+}
+
+/// Find and load the configuration file from a specific directory
+pub fn find_and_load_config_at(dir: &Path) -> Result<Config> {
+    let config_path = dir.join(CONFIG_FILENAME);
+
+    if config_path.exists() {
+        info!("Found configuration file: {}", config_path.display());
+        load_config(&config_path)
+    } else {
+        // Don't warn here as it might be common to not have a config in the target dir
+        Ok(Config::default())
+    }
 }
 
 /// Initialize a new configuration file

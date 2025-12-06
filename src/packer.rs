@@ -20,13 +20,19 @@ pub struct FileContent {
     pub is_binary: bool,
 }
 
+enum FileProcessResult {
+    Success(FileContent),
+    Suspicious(String),
+    Skipped,
+}
+
 #[derive(Debug, Serialize, Clone)]
 pub struct PackedRepository {
     pub files: Vec<FileContent>,
     pub summary: RepositorySummary,
     pub instruction: Option<String>,
     pub suspicious_files: Option<Vec<String>>,
-    pub security_check_status: security::SecurityCheckStatus,  // NEW: Track security check status
+    pub security_check_status: security::SecurityCheckStatus,
     pub binary_files: Option<Vec<String>>,
 }
 
@@ -84,22 +90,22 @@ pub async fn pack_repository(path: &Path, config: &Config) -> Result<PackedRepos
     let progress = Arc::new(Mutex::new(process_progress));
 
     // Process files in parallel
-    let file_contents: Vec<FileContent> = files
+    // Process files in parallel
+    let results: Vec<FileProcessResult> = files
         .par_iter()
-        .filter_map(|file| {
+        .map(|file| {
             let result = match read_file_content(file, config) {
-                Ok(Some(content)) => Some(content),
-                Ok(none) => none,
+                Ok(res) => res,
                 Err(e) => {
                     warn!("Error reading file {}: {}", file.path.display(), e);
-                    None
+                    FileProcessResult::Skipped
                 }
             };
 
             // Update the progress bar
             if let Ok(pb) = progress.lock() {
                 pb.inc(1);
-                if let Some(content) = &result {
+                if let FileProcessResult::Success(content) = &result {
                     pb.set_message(format!("Processed {}", content.relative_path));
                 }
             }
@@ -110,46 +116,37 @@ pub async fn pack_repository(path: &Path, config: &Config) -> Result<PackedRepos
 
     // Finish the progress bar
     if let Ok(pb) = progress.lock() {
-        pb.finish_with_message(format!("Processed {} files", file_contents.len()));
+        pb.finish_with_message(format!("Processed {} files", results.len()));
+    }
+
+    // Separate clean content from suspicious files
+    let mut file_contents = Vec::new();
+    let mut suspicious_path_list = Vec::new();
+
+    for result in results {
+        match result {
+            FileProcessResult::Success(content) => file_contents.push(content),
+            FileProcessResult::Suspicious(path) => suspicious_path_list.push(path),
+            FileProcessResult::Skipped => {}
+        }
     }
 
     info!("Processed {} files", file_contents.len());
 
-    // Perform security check if enabled
-    let security_progress = multi_progress.add(ProgressBar::new_spinner());
-    security_progress.set_style(
-        ProgressStyle::default_spinner()
-            .template("{spinner:.yellow} {prefix:.bold.dim} {msg}")
-            .unwrap(),
-    );
-    security_progress.set_prefix("[Security]");
-
+    // Determine security status based on findings
     let (suspicious_files, security_status) = if !config.security.enable_security_check {
-        security_progress.finish_with_message("Security check disabled");
         (None, security::SecurityCheckStatus::Disabled)
+    } else if !suspicious_path_list.is_empty() {
+        info!(
+            "Found {} suspicious files that may contain sensitive information",
+            suspicious_path_list.len()
+        );
+        (
+            Some(suspicious_path_list),
+            security::SecurityCheckStatus::CompletedWithFindings,
+        )
     } else {
-        security_progress.set_message("Performing security check...");
-        match security::perform_security_check(path) {
-            Ok(files) => {
-                if !files.is_empty() {
-                    security_progress
-                        .finish_with_message(format!("Found {} suspicious files", files.len()));
-                    info!(
-                        "Found {} suspicious files that may contain sensitive information",
-                        files.len()
-                    );
-                    (Some(files), security::SecurityCheckStatus::CompletedWithFindings)
-                } else {
-                    security_progress.finish_with_message("No suspicious files found");
-                    (None, security::SecurityCheckStatus::CompletedNoFindings)
-                }
-            }
-            Err(e) => {
-                security_progress.finish_with_message(format!("Security check failed: {}", e));
-                warn!("Security check failed: {}", e);
-                (None, security::SecurityCheckStatus::Failed(e.to_string()))
-            }
-        }
+        (None, security::SecurityCheckStatus::CompletedNoFindings)
     };
 
     // Generate a summary of the repository
@@ -191,24 +188,37 @@ pub async fn pack_repository(path: &Path, config: &Config) -> Result<PackedRepos
     })
 }
 
-fn read_file_content(file: &FileInfo, config: &Config) -> Result<Option<FileContent>> {
+fn read_file_content(file: &FileInfo, config: &Config) -> Result<FileProcessResult> {
     // Don't try to read binary files unless they were explicitly included
-    if file.is_binary {
+    if file.is_binary && config.include.is_empty() {
         debug!("Skipping binary file: {}", file.path.display());
-        return Ok(None);
+        return Ok(FileProcessResult::Skipped);
+    }
+
+    // Check filename for suspicious patterns FIRST (if enabled)
+    if config.security.enable_security_check && security::check_suspicious_filename(&file.path) {
+        warn!(
+            "Skipping file with suspicious filename: {}",
+            file.path.display()
+        );
+        return Ok(FileProcessResult::Suspicious(
+            file.relative_path.to_string_lossy().to_string(),
+        ));
     }
 
     // Read the file content
     let content = fs::read_to_string(&file.path)
         .context(format!("Failed to read file: {}", file.path.display()))?;
 
-    // Check for sensitive content if security check is enabled
+    // Check for sensitive content (if enabled)
     if config.security.enable_security_check && security::check_sensitive_content(&content) {
         warn!(
             "Skipping file with sensitive content: {}",
             file.path.display()
         );
-        return Ok(None);
+        return Ok(FileProcessResult::Suspicious(
+            file.relative_path.to_string_lossy().to_string(),
+        ));
     }
 
     // Get the file extension
@@ -228,7 +238,7 @@ fn read_file_content(file: &FileInfo, config: &Config) -> Result<Option<FileCont
         content
     };
 
-    Ok(Some(FileContent {
+    Ok(FileProcessResult::Success(FileContent {
         relative_path: file.relative_path.to_string_lossy().to_string(),
         extension,
         content: processed_content,

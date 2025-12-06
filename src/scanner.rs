@@ -308,8 +308,11 @@ pub fn scan_repository(base_path: &Path, config: &Config) -> Result<Vec<FileInfo
         }
 
         // Only keep files that match the include patterns
+        // Fix: If include patterns are provided but no files match, we should have an empty list
         if !included_files.is_empty() {
             files.retain(|path| included_files.contains(path));
+        } else {
+            files.clear();
         }
     }
 
@@ -329,12 +332,9 @@ pub fn scan_repository(base_path: &Path, config: &Config) -> Result<Vec<FileInfo
                             info.size
                         );
                         None
-                    } else if info.is_binary
-                        && !config
-                            .include
-                            .iter()
-                            .any(|p| p.contains("*.bin") || p.contains("binary"))
-                    {
+                    } else if info.is_binary && config.include.is_empty() {
+                        // Only skip binary files if no specific includes were provided.
+                        // If the user explicitly included files, we assume they want them (even if binary).
                         debug!(
                             "Skipping binary file: {} ({})",
                             info.path.display(),
