@@ -34,7 +34,7 @@ async fn test_explicit_binary_include() {
 
     assert_eq!(result.files.len(), 1, "Should include exactly 1 file");
     assert_eq!(result.files[0].relative_path, "logo.png");
-    assert_eq!(result.files[0].is_binary, true);
+    assert!(result.files[0].is_binary);
 }
 
 #[tokio::test]
