@@ -311,7 +311,7 @@ pub fn format_sqlite_sql(repo: &PackedRepository) -> Result<String> {
         "-- WARNING: This script drops existing 'remix_*' tables before recreating them.\n",
     );
     output.push_str("-- Run this script in an empty database or one without 'remix_*' tables.\n");
-    output.push_str("\n");
+    output.push('\n');
 
     // Enable foreign keys
     output.push_str("PRAGMA foreign_keys = ON;\n\n");
@@ -449,7 +449,7 @@ pub fn format_sqlite_sql(repo: &PackedRepository) -> Result<String> {
                 escape_sqlite_string(ext)
             ));
         }
-        output.push_str("\n");
+        output.push('\n');
     }
 
     // Insert remix_files
@@ -478,7 +478,7 @@ pub fn format_sqlite_sql(repo: &PackedRepository) -> Result<String> {
             ));
             output.push_str(");\n");
         }
-        output.push_str("\n");
+        output.push('\n');
     }
 
     // Insert remix_binary_files
@@ -492,7 +492,7 @@ pub fn format_sqlite_sql(repo: &PackedRepository) -> Result<String> {
                     escape_sqlite_string(bf)
                 ));
             }
-            output.push_str("\n");
+            output.push('\n');
         }
     }
 
@@ -507,7 +507,7 @@ pub fn format_sqlite_sql(repo: &PackedRepository) -> Result<String> {
                     escape_sqlite_string(sf)
                 ));
             }
-            output.push_str("\n");
+            output.push('\n');
         }
     }
 

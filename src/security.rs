@@ -1,11 +1,14 @@
+use anyhow::Result;
 use serde::Serialize;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use walkdir::WalkDir;
 
 #[derive(Debug, Serialize, Clone)]
 pub enum SecurityCheckStatus {
     Disabled,
     CompletedNoFindings,
     CompletedWithFindings,
+    #[allow(dead_code)]
     Failed(String),
 }
 
@@ -67,4 +70,40 @@ pub fn check_sensitive_content(content: &str) -> bool {
     }
 
     false
+}
+
+/// Recursively checks a directory for security issues
+#[allow(dead_code)]
+pub fn perform_security_check(path: &Path) -> Result<Vec<PathBuf>> {
+    let mut suspicious_files = Vec::new();
+
+    for entry in WalkDir::new(path).into_iter().filter_map(|e| e.ok()) {
+        let path = entry.path();
+
+        if path.is_file() {
+            // Check filename
+            if check_suspicious_filename(path) {
+                suspicious_files.push(path.to_path_buf());
+                continue;
+            }
+
+            // Check content (skip binary files)
+            let mime = tree_magic_mini::from_filepath(path);
+            if mime.is_some_and(|m| m.starts_with("text/")) {
+                match std::fs::read_to_string(path) {
+                    Ok(content) => {
+                        if check_sensitive_content(&content) {
+                            suspicious_files.push(path.to_path_buf());
+                        }
+                    }
+                    Err(_) => {
+                        // Read error - skip content check
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(suspicious_files)
 }

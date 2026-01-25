@@ -289,6 +289,7 @@ impl Config {
 }
 
 /// Find and load the configuration file
+#[allow(dead_code)]
 pub fn find_and_load_config() -> Result<Config> {
     let current_dir = std::env::current_dir()?;
     find_and_load_config_at(&current_dir)
