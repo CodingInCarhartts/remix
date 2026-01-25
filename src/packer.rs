@@ -182,8 +182,8 @@ pub async fn pack_repository(path: &Path, config: &Config) -> Result<PackedRepos
         files: file_contents,
         summary,
         instruction,
-        suspicious_files,  // Now properly tracks security check results
-        security_check_status: security_status,  // Fix: use correct variable name
+        suspicious_files, // Now properly tracks security check results
+        security_check_status: security_status, // Fix: use correct variable name
         binary_files: Some(binary_files),
     })
 }

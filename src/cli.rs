@@ -45,8 +45,8 @@ pub struct Cli {
     #[arg(short, long)]
     pub output: Option<PathBuf>,
 
-    /// Output format: md/markdown (.md), json (.json), txt/text (.txt), toon (.toon)
-    #[arg(long, value_parser = ["md", "markdown", "json", "txt", "text", "toon"])]
+    /// Output format: md/markdown (.md), json (.json), txt/text (.txt), toon (.toon), sql (.sql)
+    #[arg(long, value_parser = ["md", "markdown", "json", "txt", "text", "toon", "sql"])]
     pub format: Option<String>,
 
     /// Compress the code output (removes unnecessary whitespace)

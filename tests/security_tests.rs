@@ -95,10 +95,10 @@ fn test_check_sensitive_content_edge_cases() {
     ];
 
     let safe_cases = vec![
-        "const version = '1.2.3'",  // Version string
+        "const version = '1.2.3'",                     // Version string
         "log.debug('API called with key: test_key')",  // Test key in log
-        "const example = 'sk_test_example_from_docs'",  // Example from docs
-        "README.md contains sk_test_123",  // In documentation
+        "const example = 'sk_test_example_from_docs'", // Example from docs
+        "README.md contains sk_test_123",              // In documentation
     ];
 
     for case in sensitive_cases {
@@ -126,7 +126,10 @@ fn test_perform_security_check_empty_directory() {
     assert!(result.is_ok());
 
     let suspicious_files = result.unwrap();
-    assert!(suspicious_files.is_empty(), "Empty directory should have no suspicious files");
+    assert!(
+        suspicious_files.is_empty(),
+        "Empty directory should have no suspicious files"
+    );
 }
 
 #[test]
@@ -143,5 +146,8 @@ fn test_perform_security_check_binary_file() {
 
     let suspicious_files = result.unwrap();
     // Binary files are not checked for sensitive content
-    assert!(suspicious_files.is_empty(), "Binary files should not be checked for sensitive content");
+    assert!(
+        suspicious_files.is_empty(),
+        "Binary files should not be checked for sensitive content"
+    );
 }

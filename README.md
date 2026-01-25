@@ -98,7 +98,7 @@ flowchart TD
 | 🎯 **Intelligent Filtering** | Include/exclude files using glob patterns |
 | 🛡️ **Multi-layered Ignore System** | Uses `.gitignore`, `.mixignore`, and custom ignore patterns |
 | 🔒 **Security Checks** | Automatically detect and warn about sensitive information |
-| 📝 **Multiple Output Formats** | Markdown, JSON, plain text, and TOON support |
+| 📝 **Multiple Output Formats** | Markdown, JSON, plain text, TOON, and SQLite SQL support |
 | 🧹 **Comment Removal** | Optionally strip comments from source code to reduce token count |
 | ⚙️ **Flexible Configuration** | JSON-based config files with CLI overrides |
 | 🎨 **AI Tool Optimized** | Formatted output designed for LLM consumption |
@@ -211,8 +211,8 @@ remix --init
 # Specify output path
 remix --output ./my-repo.md
 
-# Change output format (md, json, txt, toon)
-remix --format toon
+# Change output format (md, json, txt, toon, sql)
+remix --format sql
 
 # Open output file after generation
 remix --open
@@ -341,6 +341,19 @@ Plain text output with:
 - Simple file headers
 - Raw code content
 - Minimal formatting
+
+### SQLite SQL
+
+Generates a SQLite-compatible SQL script that:
+- Creates tables for repository data (runs, summary, files, extensions, binary files, suspicious files)
+- Inserts all repository metadata and file contents
+- Uses proper escaping for special characters (single quotes, newlines)
+- Can be imported directly into a SQLite database:
+  ```bash
+  remix --format sql --output remix.sql
+  sqlite3 remix.db < remix.sql
+  sqlite3 remix.db "SELECT * FROM remix_files;"
+  ```
 
 ### Basic Usage Examples
 

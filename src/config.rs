@@ -255,6 +255,7 @@ impl Config {
                 "json" => "json",
                 "txt" | "text" => "txt",
                 "toon" => "toon",
+                "sql" => "sql",
                 _ => "md",
             };
             let path_buf = PathBuf::from(&config.output.path);

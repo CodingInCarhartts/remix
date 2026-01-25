@@ -1,6 +1,6 @@
-use remix::config::{Config, OutputConfig, load_config};
-use remix::cli::Cli;
 use clap::Parser;
+use remix::cli::Cli;
+use remix::config::{load_config, Config, OutputConfig};
 use std::fs;
 use tempfile::TempDir;
 
@@ -58,7 +58,10 @@ fn test_load_config_valid() {
 
     let config = load_config(&config_path).unwrap();
 
-    assert_eq!(config.include, vec!["*.rs".to_string(), "*.toml".to_string()]);
+    assert_eq!(
+        config.include,
+        vec!["*.rs".to_string(), "*.toml".to_string()]
+    );
     assert_eq!(config.ignore.custom_patterns, vec!["target/**".to_string()]);
     assert_eq!(config.max_file_size, 50000);
     assert!(config.compress);
@@ -94,11 +97,14 @@ fn test_config_merge_with_cli() {
     let config = Config::default();
     let cli = Cli::parse_from([
         "remix",
-        "--include", "*.rs",
-        "--format", "toon",
-        "--output", "output.toon",
+        "--include",
+        "*.rs",
+        "--format",
+        "toon",
+        "--output",
+        "output.toon",
         "--compress",
-        "--remove-comments"
+        "--remove-comments",
     ]);
 
     let merged = config.merge_with_cli(&cli);

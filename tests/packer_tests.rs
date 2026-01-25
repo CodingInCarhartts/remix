@@ -82,7 +82,9 @@ async fn test_pack_repository_with_include_patterns() {
         .collect();
 
     // Should only include .rs and .md files
-    assert!(file_paths.iter().all(|path| path.ends_with(".rs") || path.ends_with(".md")));
+    assert!(file_paths
+        .iter()
+        .all(|path| path.ends_with(".rs") || path.ends_with(".md")));
     assert!(file_paths.iter().any(|path| path.contains("main.rs")));
     assert!(file_paths.iter().any(|path| path.contains("README.md")));
 }
@@ -181,7 +183,11 @@ async fn test_pack_repository_directory_traversal() {
 
     // Create deep nested directory
     std::fs::create_dir_all(test_dir.path().join("deep/nested/folder")).unwrap();
-    std::fs::write(test_dir.path().join("deep/nested/folder/file.txt"), "nested content").unwrap();
+    std::fs::write(
+        test_dir.path().join("deep/nested/folder/file.txt"),
+        "nested content",
+    )
+    .unwrap();
 
     let config = Config::default();
     let result = pack_repository(test_dir.path(), &config).await.unwrap();
@@ -193,10 +199,10 @@ async fn test_pack_repository_directory_traversal() {
         .collect();
 
     // Deep nested file should be included
-    assert!(file_paths.iter().any(|path| path.contains("deep/nested/folder/file.txt")));
+    assert!(file_paths
+        .iter()
+        .any(|path| path.contains("deep/nested/folder/file.txt")));
 }
-
-
 
 #[tokio::test]
 async fn test_pack_repository_empty_directory() {

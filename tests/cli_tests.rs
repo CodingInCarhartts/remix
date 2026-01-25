@@ -1,5 +1,5 @@
-use remix::cli::Cli;
 use clap::Parser;
+use remix::cli::Cli;
 
 #[test]
 fn test_cli_parsing() {
@@ -62,8 +62,6 @@ fn test_cli_format_validation() {
     }
 }
 
-
-
 #[test]
 fn test_cli_edge_cases() {
     // Test empty path
@@ -86,20 +84,30 @@ fn test_cli_all_options() {
     let cli = Cli::parse_from([
         "remix",
         "/test/path",
-        "--config", "config.json",
+        "--config",
+        "config.json",
         "--init",
-        "--include", "*.rs,*.toml",
-        "--ignore", "target/**,*.log",
-        "--max-file-size", "50000",
-        "--output", "output.md",
-        "--format", "json",
+        "--include",
+        "*.rs,*.toml",
+        "--ignore",
+        "target/**,*.log",
+        "--max-file-size",
+        "50000",
+        "--output",
+        "output.md",
+        "--format",
+        "json",
         "--compress",
         "--skip-sensitive-check",
-        "--remote", "https://github.com/user/repo",
-        "--remote-branch", "develop",
+        "--remote",
+        "https://github.com/user/repo",
+        "--remote-branch",
+        "develop",
         "--open",
-        "--instruction", "Test instruction",
-        "--instruction-file", "instructions.txt",
+        "--instruction",
+        "Test instruction",
+        "--instruction-file",
+        "instructions.txt",
         "--remove-comments",
         "--no-gitignore",
         "--no-default-patterns",

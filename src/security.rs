@@ -22,7 +22,6 @@ pub fn check_suspicious_filename(path: &Path) -> bool {
         || filename.contains("config")
 }
 
-
 /// Returns a list of sensitive keywords to look for
 fn get_sensitive_keywords() -> Vec<String> {
     vec![
